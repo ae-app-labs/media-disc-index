@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Image xmlns:mx="http://www.adobe.com/2006/mxml"
+	width="16" height="16"
+	verticalAlign="middle" horizontalAlign="center"
+	verticalCenter="0" horizontalCenter="0">
+	<mx:Script>
+		<![CDATA[
+			import com.ae.discindex.assets.SharedAssets;
+			
+			override public function set data(value:Object):void
+			{
+				super.data = value;
+				if(data.field1)
+					this.source = SharedAssets.acceptImage;
+				else
+					this.source = SharedAssets.deleteImage;
+			}
+		]]>
+	</mx:Script>
+</mx:Image>

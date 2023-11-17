@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<EventMap
+   xmlns:mx="http://www.adobe.com/2006/mxml"
+   xmlns="http://mate.asfusion.com/" xmlns:service="com.ae.service.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.ae.discindex.business.DiscIndexManager;
+			import com.ae.discindex.events.DataBaseEvent;
+			import com.ae.discindex.business.DatabaseManager;
+			import com.ae.discindex.business.AppManager;
+			import mx.events.FlexEvent;
+			
+			
+		]]>
+	</mx:Script>
+	
+	<EventHandlers type="{DataBaseEvent.EXPORT_DB_FILE}">
+
+		<!--connect to thr default db-->
+		<MethodInvoker generator="{DatabaseManager}"
+			method="copyDatabase"
+			arguments="{event.file}"/>
+			
+		<CallBack method="fileCopied"/>
+		
+	</EventHandlers>
+	
+	<EventHandlers type="{DataBaseEvent.IMPORT_DB_FILE}">
+		
+		<MethodInvoker generator="{DatabaseManager}"
+			method="replaceDatabase"
+			arguments="{event.file}"/>
+		
+		<CallBack method="databaseImported"/>
+		
+	</EventHandlers>
+	
+	<EventHandlers type="{DataBaseEvent.DB_OPENED}">
+		
+		<MethodInvoker generator="{DatabaseManager}"
+			method="getConnection"/>
+			
+		<MethodInvoker generator="{DiscIndexManager}"
+			method="setConnection"
+			arguments="{lastReturn}"/>
+		
+	</EventHandlers>
+	
+</EventMap>

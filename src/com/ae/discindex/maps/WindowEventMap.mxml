@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<EventMap
+   xmlns:mx="http://www.adobe.com/2006/mxml"
+   xmlns="http://mate.asfusion.com/" xmlns:service="com.ae.service.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.ae.discindex.windows.MediaInfoWindow;
+			import com.ae.discindex.business.DiscIndexManager;
+			import com.ae.discindex.business.WindowManager;
+			import com.ae.discindex.events.ShowWindowEvent;
+			
+		]]>
+	</mx:Script>
+	
+	<EventHandlers type="{ShowWindowEvent.SHOW_IMPORT_PREVIEW}">
+		
+		<!--init the db file pos-->
+		<MethodInvoker generator="{WindowManager}" 
+			method="showImportWindow"
+			arguments="{event.data}"/>
+		
+	</EventHandlers>
+	
+	<EventHandlers type="{ShowWindowEvent.SHOW_MEDIA_INFO}">
+		
+		<MethodInvoker generator="{WindowManager}"
+			method="showMediaInfo"/>
+		
+	</EventHandlers>
+	
+	<Injectors target="{MediaInfoWindow}">
+		<PropertyInjector source="{DiscIndexManager}"
+			sourceKey="mediaColl" targetKey="data"/>
+	</Injectors>
+	
+</EventMap>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml"
+	verticalAlign="middle" horizontalAlign="center"
+	styleName="viewStyle" 
+	width="100%" height="100%">
+	<mx:Script>
+		<![CDATA[
+			import com.ae.discindex.assets.SharedAssets;
+		]]>
+	</mx:Script>
+	
+	<mx:Panel width="350" height="180" verticalAlign="middle" 
+		horizontalAlign="center" title="About">
+		<mx:Image source="{SharedAssets.infoIcon}"/>
+		<mx:Label text="MediaDiscIndexApp 2.1" styleName="mediumBoldFont"/>
+		<mx:Label text="An Internal Application to manage Media Discs"/>
+	</mx:Panel>
+	
+</mx:VBox>

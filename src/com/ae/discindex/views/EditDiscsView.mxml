@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" 
+	width="100%" height="100%"
+	styleName="viewStyle"
+	creationComplete="creationCompleteHandler()" xmlns:components="com.ae.components.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.ae.discindex.assets.SharedAssets;
+			import com.ae.discindex.vo.DiscVo;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;
+			import com.ae.discindex.events.DiscsIndexEvent;
+			
+			[Bindable]
+			public var discsColl:Array;
+			
+			private function creationCompleteHandler():void
+			{
+				loadData();
+			}
+			
+			private function loadData():void
+			{
+				var fetchDiscsEvent:DiscsIndexEvent = 
+					new DiscsIndexEvent( DiscsIndexEvent.FETCH_ALL_DISCS);
+				dispatchEvent( fetchDiscsEvent );
+			}
+			
+			private function discClick(event:MouseEvent):void
+			{
+				var source:DataGridItemRenderer = 
+					event.target as DataGridItemRenderer;
+				if(source)
+				{
+					var discId:int = source.data.id;
+					var discVo:DiscVo = new DiscVo();
+					discVo.id = discId;
+					
+					var fetchDiscEvent:DiscsIndexEvent = 
+						new DiscsIndexEvent( DiscsIndexEvent.FETCH_MEDIA_FOR_DISC);
+					fetchDiscEvent.discVo = discVo;
+					
+					dispatchEvent(fetchDiscEvent);
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" height="30" styleName="headerStripStyle"
+		verticalAlign="middle">
+		<mx:Canvas width="40%" height="100%">
+			<components:HeadingWithIcon label="Edit Disc" 
+				imageIcon="{SharedAssets.editIcon}"/>
+		</mx:Canvas>
+		<mx:Canvas width="60%" height="100%">
+			<mx:Button label="Refresh" click="loadData()" right="5"
+				icon="{SharedAssets.refreshIcon}" 
+				verticalCenter="0"/>
+		</mx:Canvas>
+	</mx:HBox>
+	
+	<mx:DataGrid id="theDataGrid" width="100%" height="100%" 
+		dataProvider="{discsColl}" click="discClick(event)">
+		<mx:columns>
+			<mx:DataGridColumn headerText="Disc Name" dataField="name"/>
+			<mx:DataGridColumn headerText="Date" dataField="date"/>
+		</mx:columns>
+	</mx:DataGrid>
+	
+	<mx:HBox width="100%" height="18" verticalAlign="middle" horizontalAlign="right">
+		<mx:Label text="{discsColl.length  + ' Discs found!'}"/>
+	</mx:HBox>
+</mx:VBox>

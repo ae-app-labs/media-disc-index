@@ -1,0 +1,41 @@
+
+.viewStyle
+{
+	background-color: #d2d2d2;
+	padding-left : 5;
+	padding-right: 5;
+	padding-top: 10;
+	padding-bottom: 5;
+}
+
+.headerStripStyle
+{
+	background-color: #f2f2f2;
+	padding-top: 3;
+	padding-bottom: 3;
+	horizontal-gap: 5;
+}
+.buttonCanvas
+{
+	corner-radius: 7;
+	border-style: solid;
+	border-color: #78B8E0;
+	background-color: #CACACA;
+}
+.mediumBoldFont
+{
+	color : #000000;
+	font-size: 14px;
+	font-weight: bold;
+}
+.largeNormalFont
+{
+	color: #121212;
+	font-size: 16;
+}
+.largeBoldFont
+{
+	color: #121212;
+	font-size: 16;
+	font-weight: bold;
+}

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<EventMap
+   xmlns:mx="http://www.adobe.com/2006/mxml"
+   xmlns="http://mate.asfusion.com/" xmlns:service="com.ae.service.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.ae.discindex.windows.MediaInfoWindow;
+			import com.ae.discindex.views.SearchView;
+			import com.ae.discindex.business.SettingsManager;
+			import com.ae.discindex.events.ShowWindowEvent;
+			import com.ae.discindex.views.EditDiscsView;
+			import com.ae.discindex.business.DataManager;
+			import com.ae.discindex.business.DiscIndexManager;
+			import com.ae.discindex.events.DiscsIndexEvent;
+			import com.ae.discindex.business.DatabaseManager;
+			import com.ae.discindex.business.AppManager;
+			import mx.events.FlexEvent;
+			
+			
+		]]>
+	</mx:Script>
+	
+	<Debugger level="{Debugger.ERROR}"/>
+	
+	<EventHandlers type="{DiscsIndexEvent.FETCH_ALL_DISCS}" debug="true">
+		
+		<MethodInvoker generator="{DiscIndexManager}"
+			method="fetchAllDiscs"/>
+	</EventHandlers>
+	
+	<EventHandlers type="{DiscsIndexEvent.FETCH_MEDIA_FOR_DISC}">
+		
+		<MethodInvoker generator="{DiscIndexManager}"
+			method="fetchMediaForDisc"
+			arguments="{event.discVo}"/>
+		
+		<EventAnnouncer generator="{ShowWindowEvent}"
+			type="showMediaInfo"/>
+		
+	</EventHandlers>
+	
+	<EventHandlers type="{DiscsIndexEvent.UPDATE_DISC}" debug="true">
+		
+		<MethodInvoker generator="{DiscIndexManager}"
+			method="updateDisc"
+			arguments="{event.discVo}"/>
+	</EventHandlers>
+	
+	<EventHandlers type="{DiscsIndexEvent.ADD_DISC}">
+		
+		<!--init the db file pos-->
+		<MethodInvoker generator="{DiscIndexManager}" 
+			method="addDisc"
+			arguments="{event.discVo}"/>
+		
+	</EventHandlers>
+	
+	<EventHandlers type="{DiscsIndexEvent.ADD_DISCS}">
+		
+		<MethodInvoker generator="{DiscIndexManager}"
+			method="addDiscs"
+			arguments="{event.dataColl}"/>
+			
+	</EventHandlers>
+	
+	<EventHandlers type="{DiscsIndexEvent.IMPORT_FROM_CSV}" debug="true">
+		
+		<MethodInvoker generator="{DataManager}"
+			method="importFromCsv"
+			arguments="{event.file}"/>
+			
+		<CallBack method="importDone" arguments="{[lastReturn]}"/>
+		
+	</EventHandlers>
+	
+	<EventHandlers type="{DiscsIndexEvent.FILE_SELECTED}">
+		
+		<MethodInvoker generator="{SettingsManager}"
+			method="setLastBrowsedPath"
+			arguments="{event.file}"/>
+		
+	</EventHandlers>
+	
+	<EventHandlers type="{DiscsIndexEvent.SEARCH_INDEX}" debug="true">
+		
+		<MethodInvoker generator="{DiscIndexManager}"
+			method="searchIndex"
+			arguments="{[event.query, event.filterType]}"/>
+		
+	</EventHandlers>
+	
+	<!--injectors-->
+	<Injectors target="{EditDiscsView}">
+		<PropertyInjector source="{DiscIndexManager}"
+			targetKey="discsColl" sourceKey="discsColl"/>
+	</Injectors>
+	
+	<Injectors target="{SearchView}" debug="true">
+		<PropertyInjector source="{DiscIndexManager}"
+			sourceKey="searchResult" targetKey="searchResult"/>
+		<PropertyInjector source="{DiscIndexManager}"
+			sourceKey="searchInfo" targetKey="searchInfo"/>
+	</Injectors>
+	
+</EventMap>

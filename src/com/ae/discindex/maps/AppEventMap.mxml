@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<EventMap
+   xmlns:mx="http://www.adobe.com/2006/mxml"
+   xmlns="http://mate.asfusion.com/" xmlns:service="com.ae.service.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.ae.discindex.events.AppEvent;
+			import com.ae.discindex.views.IndexDisc;
+			import com.ae.discindex.business.SettingsManager;
+			import com.ae.discindex.business.DiscIndexManager;
+			import com.ae.discindex.business.DatabaseManager;
+			import com.ae.discindex.business.AppManager;
+			import mx.events.FlexEvent;
+			
+			
+		]]>
+	</mx:Script>
+	
+	<EventHandlers type="{FlexEvent.PREINITIALIZE}">
+		
+		<!--read settings-->
+		<MethodInvoker generator="{SettingsManager}"
+			method="readSettings"/>
+	
+		<!--init the db file pos-->
+		<MethodInvoker generator="{AppManager}" 
+			method="init"/>
+		
+		<!--connect to thr default db-->
+		<MethodInvoker generator="{DatabaseManager}" cache="global"
+			method="connect"/>
+			
+		<ObjectBuilder generator="{DiscIndexManager}" 
+			constructorArguments="{lastReturn}"/>
+		
+	</EventHandlers>
+	
+	<EventHandlers type="{Event.CLOSING}">
+		
+		<MethodInvoker generator="{DatabaseManager}"
+			method="disconnect"/>
+		
+		<MethodInvoker generator="{SettingsManager}"
+			method="saveSettings"/>
+			
+		<MethodInvoker generator="{AppManager}" 
+			method="exit"/>
+		
+	</EventHandlers>
+	
+	<EventHandlers type="{AppEvent.VIEW_CHANGED}">
+		
+		<MethodInvoker generator="{SettingsManager}"
+			method="setViewIndex"
+			arguments="{event.viewIndex}"/>
+		
+	</EventHandlers>
+	
+	<Injectors target="{IndexDisc}" debug="true">
+		<PropertyInjector source="{SettingsManager}"
+			sourceKey="lastBrowsedPath"
+			targetKey="lastBrowsedPath"/>
+	</Injectors>
+	
+	<Injectors target="{MediaDiscIndexApp}" debug="true">
+		<PropertyInjector source="{SettingsManager}"
+			sourceKey="viewIndex"
+			targetKey="viewIndex"/>
+	</Injectors>
+	
+</EventMap>

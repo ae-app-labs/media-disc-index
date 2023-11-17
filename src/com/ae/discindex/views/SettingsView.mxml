@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" 
+	width="100%" height="100%" 
+	styleName="viewStyle"
+	creationComplete="creationCompleteHandler()" 
+	xmlns:components="com.ae.components.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.ae.utils.Utils;
+			import mx.events.FileEvent;
+			import mx.controls.Alert;
+			import com.ae.discindex.events.DataBaseEvent;
+			import com.ae.discindex.events.ShowWindowEvent;
+			import com.ae.discindex.events.DiscsIndexEvent;
+			import com.ae.discindex.utils.DbFiles;
+			import com.ae.discindex.business.DatabaseManager;
+			import com.ae.discindex.business.DiscIndexManager;
+			import com.ae.discindex.assets.SharedAssets;
+			import com.ae.discindex.vo.DiscVo;
+			import com.ae.utils.FileReadWrite;
+			import com.ae.discindex.vo.MediaVo;
+			
+			import com.ae.utils.FileOperations;
+			
+			private var fileOperations:FileOperations;
+			private var currentField:String;
+			
+			private function creationCompleteHandler():void
+			{
+				fileOperations = new FileOperations();
+			}
+			
+			private function onBrowseClick(field:String):void
+			{
+				currentField = field;
+				fileOperations.addEventListener(Event.COMPLETE, onFileSelected);
+				if(currentField == "legacy")
+				{
+					fileOperations.browseForDirectory("Select folder with csv files.");
+				}
+				else if(field == "sqllitedb")
+				{
+					fileOperations.fileFilter = 
+						new FileFilter("SQLite database files (.db)","*.db");
+					fileOperations.browseForOpen("Select db file.");
+				}
+				else
+				{
+					fileOperations.browseForDirectory("Select where to export");
+				}
+			}
+			
+			private function onFileSelected(event:Event):void
+			{
+				fileOperations.removeEventListener(Event.COMPLETE, onFileSelected);
+				var selectedFile:File = fileOperations.selectedFile;
+				if(currentField == "legacy")
+				{
+					var file:File = selectedFile.resolvePath("discs.csv");
+					if(file.exists)
+					{
+						discFile.text = file.nativePath;
+						img1.source = SharedAssets.acceptImage;
+					}
+					else
+					{
+						discFile.text = "";
+						img1.source = SharedAssets.deleteImage;
+					}
+					
+					file = selectedFile.resolvePath("films.csv");
+					if(file.exists)
+					{
+						mediaFile.text = file.nativePath;
+						img2.source = SharedAssets.acceptImage;
+					}
+					else
+					{
+						mediaFile.text = "";
+						img2.source = SharedAssets.deleteImage;
+					}
+				}
+				else if(currentField == "sqllitedb")
+				{
+					var infoText:String = " File size : <b>" + 
+						Utils.bytesToString(selectedFile.size) +
+						"</b> Modified date : <b>" + 
+						selectedFile.modificationDate.toDateString() +
+						"</b>";
+					databaseFile.text = selectedFile.nativePath;
+					dbFileInfoContainer.visible = true;
+					dbFileInfoContainer.includeInLayout = true;
+					dbFileInfo.htmlText = infoText;
+				}
+				else
+				{
+					var exportDbFileEvent:DataBaseEvent = 
+						new DataBaseEvent( DataBaseEvent.EXPORT_DB_FILE);
+					exportDbFileEvent.file = selectedFile;
+					dispatchEvent( exportDbFileEvent );
+				}
+			}
+			
+			private function importData():void
+			{
+				if(fileOperations.selectedFile && 
+					fileOperations.selectedFile.isDirectory == true)
+				{
+					var importEvent:DiscsIndexEvent = 
+						new DiscsIndexEvent( DiscsIndexEvent.IMPORT_FROM_CSV);
+					importEvent.file = fileOperations.selectedFile;
+					dispatchEvent( importEvent );
+				}
+			}
+			
+			private function importFromDb():void
+			{
+				if(databaseFile.text != "")
+				{
+					var newDbFile:File = new File(databaseFile.text);
+					if(newDbFile.exists)
+					{
+						// Replace the db file
+						var importEvent:DataBaseEvent =
+							new DataBaseEvent(DataBaseEvent.IMPORT_DB_FILE);
+						importEvent.file = newDbFile;
+						dispatchEvent( importEvent );
+					}
+				}
+			}
+			
+			/**
+			 * Function invoked when the data from the scv files is
+			 * imported successfully.
+			 */
+			public function importDone(parsedData:Array):void
+			{
+				// Preview the data in a new Window
+				var previewEvent:ShowWindowEvent = 
+					new ShowWindowEvent(ShowWindowEvent.SHOW_IMPORT_PREVIEW);
+				previewEvent.data = parsedData;
+				dispatchEvent( previewEvent );
+			}
+			
+			/**
+			 * Function invoked when the database file has been copied.
+			 */
+			public function fileCopied():void
+			{
+				Alert.show("Databse file Exported successfully!", "Export Success");
+			}
+			
+			public function databaseImported():void
+			{
+				Alert.show("Database imported from .db file", "Import Success");
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" height="30" styleName="headerStripStyle"
+		verticalAlign="middle">
+		<mx:Canvas width="40%" height="100%">
+			<components:HeadingWithIcon label="Settings" 
+				imageIcon="{SharedAssets.settingsIcon}"/>
+		</mx:Canvas>
+		<mx:Canvas width="60%" height="100%">
+			
+		</mx:Canvas>
+	</mx:HBox>
+	
+	<mx:Label text="Import from csv files generated from V1" fontWeight="bold"/>
+	<mx:Button label="Select parent Folder" click="onBrowseClick('legacy')"/>
+	<mx:HBox width="100%">
+		<mx:Label text="Discs.csv " width="60"/>
+		<mx:TextInput id="discFile" editable="false"/>
+		<mx:Image id="img1" source="{SharedAssets.deleteImage}"/> 
+	</mx:HBox>
+	<mx:HBox width="100%">
+		<mx:Label text="films.csv" width="60"/>
+		<mx:TextInput id="mediaFile" editable="false"/>
+		<mx:Image id="img2" source="{SharedAssets.deleteImage}"/>
+	</mx:HBox>
+	<mx:Button label="Preview and Import Data" click="importData()"/>
+	
+	<mx:HRule width="100%"/>
+	
+	<mx:Label text="Import from an exported sqllite db file" fontWeight="bold"/>
+	<mx:HBox width="100%">
+		<mx:Label text="sqllitedb file" minWidth="50"/>
+		<mx:TextInput id="databaseFile" editable="false" minWidth="200"/>
+	</mx:HBox>
+	<mx:HBox width="100%" id="dbFileInfoContainer" 
+		visible="false" includeInLayout="false">
+		<mx:Spacer width="70"/>
+		<mx:Label id="dbFileInfo"/>
+	</mx:HBox>
+	<mx:HBox width="100%">
+		<mx:Button label="Browse" click="onBrowseClick('sqllitedb')" 
+			toolTip="Select a MediaDiscsIndex sqllite db file."/>
+		<mx:Button label="Import" click="importFromDb()"
+			toolTip="Replaces the current db file"/>
+	</mx:HBox>
+	
+	<mx:HRule width="100%"/>
+	
+	<mx:Label text="Export current sqllite db file" fontWeight="bold"/>
+	<mx:HBox width="100%">
+		<mx:Button label="Export" click="onBrowseClick('sqllitedb-export')"/>
+	</mx:HBox>
+	
+</mx:VBox>

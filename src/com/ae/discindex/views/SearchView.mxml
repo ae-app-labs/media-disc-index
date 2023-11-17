@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" 
+	styleName="viewStyle"
+	width="100%" height="100%">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.ae.discindex.assets.SharedAssets;
+			import mx.collections.ArrayCollection;
+			import mx.utils.ObjectProxy;
+			import com.ae.discindex.utils.SearchFilters;
+			import com.ae.discindex.events.DiscsIndexEvent;
+			
+			//-----------------------------------------------------------------
+			//
+			//	Variables
+			//
+			//-----------------------------------------------------------------
+	
+			[Bindable]
+			public var searchResult:ArrayCollection;
+			[Bindable]
+			public var searchInfo:String;
+			private var lastQuery:String = "";
+			
+			//-----------------------------------------------------------------
+			//
+			//	Methods
+			//
+			//-----------------------------------------------------------------
+			
+			/**
+			 * This method is called on 
+			 */
+			private function onSearchKeyUp():void
+			{
+				// Send query only if its non empty, different from the last one
+				// and minimum 2 characters
+				if(q.text != "" && q.text != lastQuery && q.text.length >= 2)
+				{
+					lastQuery = q.text;
+					sendSearchQuery();
+				}
+				if(q.text == "")
+				{
+					resetResults();
+				}
+			}
+			
+			/**
+			 * This function dispatches the event to Search the Index,
+			 * only doing empty validation for query
+			 */
+			private function sendSearchQuery():void
+			{
+				if(q.text != "")
+				{
+					var searchEvent:DiscsIndexEvent = 
+						new DiscsIndexEvent( DiscsIndexEvent.SEARCH_INDEX);
+					// Set the query text
+					searchEvent.query = q.text;
+					// Set the filterType
+					searchEvent.filterType = rbGroup.selectedValue as String;
+					// Dispatch the event
+					dispatchEvent( searchEvent );
+				}
+			}
+			
+			private function resetResults():void
+			{
+				q.text = "";
+				searchInfoLabel.text = "";
+				searchResult = new ArrayCollection();
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<!--effects-->
+	<mx:Sequence id="glowEffect">
+		<mx:Glow color="#009DFF" 
+			alphaFrom="0" alphaTo="1" 
+			blurXFrom="0" blurXTo="6"
+			blurYFrom="0" blurYTo="6"/>
+		<mx:Glow color="#009DFF" 
+			alphaFrom="1" alphaTo="0" 
+			blurXFrom="6" blurXTo="0"
+			blurYFrom="6" blurYTo="0"/>
+	</mx:Sequence>
+	
+	<!--radio button group-->
+	<mx:RadioButtonGroup id="rbGroup" change="sendSearchQuery()"/>
+	
+	<!--layout-->
+	<mx:VBox width="100%" height="70" styleName="headerStripStyle">
+		<mx:Spacer width="100%" height="2%"/>
+		<mx:HBox width="100%" height="48%">
+			<mx:Spacer width="1%"/>
+			<mx:TextInput id="q" width="98%" height="28"
+				styleName="largeBoldFont" 
+				keyUp="onSearchKeyUp()"/>
+			
+			<mx:Canvas minWidth="30" styleName="buttonCanvas"
+				toolTip="Search"
+				click="sendSearchQuery()" mouseChildren="false"
+				rollOverEffect="glowEffect"
+				useHandCursor="true" buttonMode="true">
+				<mx:Image verticalCenter="0" horizontalCenter="0"
+					 source="{SharedAssets.searchIcon}"/>
+			</mx:Canvas>
+			<mx:Canvas minWidth="30" styleName="buttonCanvas"
+				toolTip="Clear Search"
+				click="resetResults()" mouseChildren="false"
+				rollOverEffect="glowEffect"
+				useHandCursor="true" buttonMode="true">
+				<mx:Image verticalCenter="0" horizontalCenter="0"
+					 source="{SharedAssets.closeIcon}"/>
+			</mx:Canvas>
+			
+			<mx:Spacer width="1%"/>
+		</mx:HBox>
+		<mx:HBox width="100%" height="50%"
+			verticalAlign="middle">
+			<mx:Spacer width="1%"/>
+			<mx:Label text="Filter : "/>
+			<mx:RadioButton groupName="rbGroup" label="{SearchFilters.ALL}" selected="true"/>
+			<mx:RadioButton groupName="rbGroup" label="{SearchFilters.TITLE}"/>
+			<mx:RadioButton groupName="rbGroup" label="{SearchFilters.CAST}"/>
+			<mx:RadioButton groupName="rbGroup" label="{SearchFilters.DIRECTOR}"/>
+			<mx:RadioButton groupName="rbGroup" label="{SearchFilters.GENRE}"/>
+		</mx:HBox>
+	</mx:VBox>
+	
+	<mx:DataGrid id="dg" width="100%" height="100%"
+		dataProvider="{searchResult}">
+		<mx:columns>
+			<mx:DataGridColumn headerText="Disc Name" dataField="name" minWidth="65"/>
+			<mx:DataGridColumn headerText="Disc Date" dataField="date" minWidth="50"/>
+			<mx:DataGridColumn headerText="Title" dataField="title" minWidth="100"/>
+			<mx:DataGridColumn headerText="Cast" dataField="cast" minWidth="130"/>
+			<mx:DataGridColumn headerText="Director" dataField="director" minWidth="90"/>
+			<mx:DataGridColumn headerText="Genre" dataField="genre" minWidth="70"/>
+			<mx:DataGridColumn headerText="Release Year" dataField="releaseYear" minWidth="30"/>
+			<mx:DataGridColumn headerText="Language" dataField="language" minWidth="30"/>
+		</mx:columns>
+	</mx:DataGrid>
+	
+	<mx:HBox width="100%" height="18" verticalAlign="middle" horizontalAlign="right">
+		<mx:Label id="searchInfoLabel" text="{searchInfo}"/>
+		<!--
+		<mx:Label text="{searchResult.length  + ' media items found!'}"/>
+		-->
+	</mx:HBox>
+	
+</mx:VBox>

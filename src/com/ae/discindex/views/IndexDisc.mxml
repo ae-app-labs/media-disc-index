@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:VBox xmlns:mx="http://www.adobe.com/2006/mxml" 
+	width="100%" height="100%"
+	styleName="viewStyle"
+	creationComplete="creationCompleteHandler()" xmlns:components="com.ae.components.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import com.ae.discindex.assets.SharedAssets;
+			import com.ae.discindex.vo.DiscVo;
+			import com.ae.discindex.events.DiscsIndexEvent;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import com.ae.discindex.vo.MediaVo;
+			import com.ae.utils.Utils;
+			import com.ae.utils.FileOperations;
+			
+			private var fileOperations:FileOperations;
+			[Bindable]
+			private var mediaData:Array;
+			
+			[Bindable]
+			public var lastBrowsedPath:String;
+			
+			private function creationCompleteHandler():void
+			{
+				fileOperations = new FileOperations();
+				if(lastBrowsedPath != null)
+				{
+					var lastFolder:File = new File(lastBrowsedPath);
+					fileOperations.selectedFile = lastFolder;
+					fileOperations.setBrowseFolder( lastFolder );
+					textPath.text = lastBrowsedPath;
+				}
+			}
+			
+			private function onBrowseClick():void
+			{
+				fileOperations.addEventListener(Event.COMPLETE, onFileSelected);
+				fileOperations.browseForDirectory("Select Disc Path");
+			}
+			
+			private function onFileSelected(event:Event):void
+			{
+				textPath.text = fileOperations.selectedFile.nativePath;
+				
+				if(fileOperations.selectedFile.isDirectory)
+				{
+					var fileSelectedEvent:DiscsIndexEvent = 
+						new DiscsIndexEvent( DiscsIndexEvent.FILE_SELECTED);
+					fileSelectedEvent.file = fileOperations.selectedFile;
+					dispatchEvent( fileSelectedEvent );
+				}
+				
+			}
+			
+			private function fetchInfo():void
+			{
+				mediaData = new Array();
+				var childDirectories:Array = 
+					fileOperations.selectedFile.getDirectoryListing();
+				
+				for each(var file:File in childDirectories)
+				{
+					if(file.isDirectory)
+					{
+						var mediaVo:MediaVo = getNameAndYear( file.name );
+						
+						mediaVo.cast = "";
+						mediaVo.director = "";
+						mediaVo.genre = "";
+						mediaVo.language = "Other";
+						mediaVo.field1 = true;
+						mediaData.push(mediaVo);
+					}
+				}
+			}
+			
+			private function addToDb():void
+			{
+				if(txtName.text != "" && txtDate.text != "")
+				{
+					var discVO:DiscVo = new DiscVo();
+					discVO.name = txtName.text;
+					discVO.date = txtDate.text;
+					discVO.medias = new Array();
+					for each(var media:Object in mediaData)
+					{
+						if(media.field1 == true)
+						{
+							var mediaVo:MediaVo = new MediaVo();
+							mediaVo.title 		= media.title;
+							mediaVo.cast 		= media.cast;
+							mediaVo.director 	= media.director;
+							mediaVo.genre 		= media.genre;
+							mediaVo.language	= media.language;
+							mediaVo.releaseYear	= media.releaseYear;
+							discVO.medias.push( mediaVo );
+						}
+					}
+					
+					if(discVO.medias.length > 0)
+					{
+						var addDiscsEvent:DiscsIndexEvent = 
+							new DiscsIndexEvent( DiscsIndexEvent.ADD_DISC);
+						addDiscsEvent.discVo = discVO;
+						dispatchEvent( addDiscsEvent );
+					}
+					else
+					{
+						Alert.show("No items to index.", "Information");
+					}
+				}
+				else
+				{
+					Alert.show("Need disc name and date.", "Information Incomplete!");
+				}
+			}
+			
+			private function resetData():void
+			{
+				mediaData = new Array();
+				txtName.text = "";
+				txtDate.text = "";
+			}
+			
+			private function getNameAndYear(dirName:String):MediaVo
+			{
+				var filmYear:int;
+				var filmYearString:String = "";
+				var retObj:Object = new Object();
+				var mediaVo:MediaVo = new MediaVo();
+				
+				// Find the [dddd] or (dddd) from the folder name
+				var firstBracketPos:int = dirName.indexOf("[");
+				if(firstBracketPos == -1)
+				{
+					firstBracketPos = dirName.indexOf("(");
+				}
+				
+				// Retrieve film name and year
+				if(firstBracketPos > 0)
+				{
+					var yearString:String = dirName.substr( firstBracketPos + 1, 4);
+					try
+					{
+						filmYear = parseInt(yearString);
+						filmYearString = filmYear.toString();
+					}
+					catch(error:Error)
+					{
+						trace("fork");
+					} 
+					dirName = dirName.substring(0, firstBracketPos);
+					
+				}
+				dirName = Utils.replaceToken(dirName, "\\.", " ");
+				
+				mediaVo.title = dirName;
+				mediaVo.releaseYear = filmYearString;
+				
+				return mediaVo;
+			}
+			
+			private function addLabelFunction(data:Object, dgc:DataGridColumn):String
+			{
+				return (data.field1)? "Yes" : "No";
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" height="30" styleName="headerStripStyle">
+		<mx:Canvas width="50%" height="100%">
+			<components:HeadingWithIcon label="Index Disc" 
+				imageIcon="{SharedAssets.addIcon}"/>
+		</mx:Canvas>
+		<mx:HBox width="100%" height="100%" horizontalAlign="right" 
+			verticalAlign="middle">
+			<mx:Button label="Add Info" click="addToDb()"/>
+			<mx:Button label="Reset" click="resetData()"/>
+		</mx:HBox>
+		<mx:Spacer width="2" height="100%"/>
+	</mx:HBox>
+	
+	<mx:VBox width="100%" height="60" borderStyle="solid" 
+		verticalGap="5" horizontalGap="5" verticalAlign="middle">
+		
+		<mx:HBox width="100%">
+			<mx:HBox verticalAlign="middle">
+				<mx:Canvas minWidth="50">
+					<mx:Label text="Name : "/>
+				</mx:Canvas>
+				<mx:TextInput id="txtName"/>
+			</mx:HBox>
+				
+			<mx:HBox verticalAlign="middle">
+				<mx:Canvas minWidth="20">
+					<mx:Label text="Date : "/>
+				</mx:Canvas>
+				<mx:TextInput id="txtDate"/>
+			</mx:HBox>
+		</mx:HBox>
+		
+		<mx:HBox width="100%" verticalAlign="middle">
+			<mx:Canvas minWidth="50">
+				<mx:Label text="Path : " minWidth="40"/>
+			</mx:Canvas>
+			<mx:TextInput id="textPath" editable="false" minWidth="150" width="70%"/>
+			<mx:Button toolTip="Click to Change" label="Browse" 
+				click="onBrowseClick()"/>
+			<mx:Button label="Fetch Info" click="fetchInfo()"/>
+		</mx:HBox>
+		
+	</mx:VBox>
+	
+	<mx:Canvas width="100%" height="100%">
+		<mx:DataGrid id="dg" width="100%" height="100%"
+		editable="true" dataProvider="{mediaData}">
+		<mx:columns>
+			<mx:DataGridColumn headerText="Title" dataField="title" minWidth="160"/>
+			<mx:DataGridColumn headerText="Cast" dataField="cast" minWidth="180"/>
+			<mx:DataGridColumn headerText="Director" dataField="director" minWidth="80"/>
+			<mx:DataGridColumn headerText="Genre" dataField="genre" minWidth="100"/>
+			<mx:DataGridColumn headerText="Release Year" dataField="releaseYear" minWidth="60"/>
+			
+			<mx:DataGridColumn headerText="Language" dataField="language" minWidth="80">
+				<mx:itemEditor>
+					<mx:Component>
+						<mx:ComboBox>
+							<mx:dataProvider>
+								<mx:Object label="English"/>
+								<mx:Object label="Hindi"/>
+								<mx:Object label="Other" selected="true"/>
+							</mx:dataProvider>
+						</mx:ComboBox>
+					</mx:Component>
+				</mx:itemEditor>
+			</mx:DataGridColumn>
+			
+			<mx:DataGridColumn headerText="Add" dataField="field1" minWidth="50"
+				itemRenderer="com.ae.discindex.renderers.IncludeCellRenderer"
+				editorDataField="selected">
+				<mx:itemEditor>
+					<mx:Component>
+						<mx:CheckBox label="{selected}" left="10"
+							verticalCenter="0" horizontalCenter="0"/>
+					</mx:Component>
+				</mx:itemEditor>
+			</mx:DataGridColumn>
+			
+		</mx:columns>
+	</mx:DataGrid>
+	</mx:Canvas>
+	
+</mx:VBox>

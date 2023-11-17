@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:WindowedApplication xmlns:mx="http://www.adobe.com/2006/mxml"
+	showFlexChrome="true" showStatusBar="false" 
+	title="MediaDiscIndexApp" titleAlignment="center"
+	minWidth="650" minHeight="450" width="720" height="560" 
+	layout="absolute" creationComplete="creationCompleteHandler()" 
+	xmlns:views="com.ae.discindex.views.*" xmlns:maps="com.ae.discindex.maps.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.ae.discindex.events.AppEvent;
+			import mx.formatters.DateFormatter;
+			
+			//-----------------------------------------------------------------
+			//
+			//	Variables
+			//
+			//-----------------------------------------------------------------
+			
+			[Bindable]
+			public var viewIndex:int;
+			private var timer:Timer;
+			private var dateFormatter:DateFormatter;
+			
+			//-----------------------------------------------------------------
+			//
+			//	Methods
+			//
+			//-----------------------------------------------------------------
+			
+			/**
+			 * Invoked on creation complete.
+			 */
+			private function creationCompleteHandler():void
+			{
+				dateFormatter = new DateFormatter();
+				dateFormatter.formatString = "H:NN:SS";
+				
+				// Set the time initially
+				timeText.text = dateFormatter.format( new Date() );
+				
+				// Start a timer to update the timer text
+				timer = new Timer(1000);
+				timer.addEventListener(TimerEvent.TIMER, onTimer);
+				timer.start();
+			}
+			
+			/**
+			 * Update the time text on the screen
+			 */
+			private function onTimer(event:TimerEvent):void
+			{
+				timeText.text = dateFormatter.format( new Date() );
+			}
+			
+			private function onButtonBarClick():void
+			{
+				var appEvent:AppEvent = new AppEvent( AppEvent.VIEW_CHANGED);
+				appEvent.viewIndex = buttonBar.selectedIndex;
+				dispatchEvent( appEvent );
+			}
+		]]>
+	</mx:Script>
+	
+	<!--styles-->
+	<mx:Style source="/assets/css/styles.css"/>
+	
+	<!--event maps-->
+	<maps:AppEventMap/>
+	<maps:WindowEventMap/>
+	<maps:DatabaseEventMap/>
+	<maps:DiscIndexEventMap/>
+	
+	<!--effects-->
+	
+	<mx:Array id="buttonLabels">
+		<mx:Object label="Search" toolTip="Search the Index"/>
+		<mx:Object label="Index" toolTip="Index a new disc"/>
+		<mx:Object label="Edit" toolTip="Edit a Disc"/>
+		<mx:Object label="Settings" toolTip="Change Settings"/>
+		<mx:Object label="About" toolTip="About the application"/>
+	</mx:Array>
+	
+	<!--layout-->
+	<mx:ApplicationControlBar dock="true" autoLayout="true">
+		<mx:ToggleButtonBar id="buttonBar" dataProvider="{buttonLabels}" 
+			selectedIndex="{viewIndex}" itemClick="onButtonBarClick()"
+			verticalCenter="0"  horizontalCenter="0" 
+			useHandCursor="true" buttonMode="true"/>
+		<mx:Label id="timeText" fontWeight="bold" right="10"/>
+	</mx:ApplicationControlBar>
+	
+	<!--the viewstack-->
+	<mx:ViewStack id="tabNavigator" width="100%" height="100%" 
+		selectedIndex="{buttonBar.selectedIndex}">
+		
+		<mx:Canvas label="Search">
+			<views:SearchView/>
+		</mx:Canvas>
+		<mx:Canvas label="Index">
+			<views:IndexDisc/>
+		</mx:Canvas>
+		<mx:Canvas label="Edit">
+			<views:EditDiscsView/>
+		</mx:Canvas>
+		<mx:Canvas label="Settings">
+			<views:SettingsView/>
+		</mx:Canvas>
+		<mx:Canvas label="About">
+			<views:AboutView/>
+		</mx:Canvas>
+	</mx:ViewStack>
+	
+</mx:WindowedApplication>

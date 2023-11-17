@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" 
+	layout="vertical" width="680" height="350" 
+	showCloseButton="true" title="Media Info"
+	styleName="viewStyle"
+	close="onCloseClick()"
+	xmlns:components="com.ae.components.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import com.ae.discindex.assets.SharedAssets;
+			import com.ae.discindex.vo.DiscVo;
+			import com.ae.discindex.vo.MediaVo;
+			import mx.controls.dataGridClasses.DataGridItemRenderer;
+			import com.ae.discindex.events.DiscsIndexEvent;
+			import com.ae.discindex.business.DiscIndexManager;
+			import mx.managers.PopUpManager;
+			
+			//-----------------------------------------------------------------
+			//
+			//	Methods
+			//
+			//-----------------------------------------------------------------
+			
+			private function onCloseClick():void
+			{
+				PopUpManager.removePopUp( this );
+			}
+			
+			/**
+			 * Invoked when the update() button is clicked.
+			 * Updates all the rows from data.
+			 */
+			private function onUpdateClick():void
+			{
+				if(data)
+				{
+					var mediasColl:Array = new Array();
+					for each(var item:Object in data)
+					{
+						var mediaVo:MediaVo = new MediaVo();
+						mediaVo.cast = item.cast;
+						mediaVo.director = item.director;
+						mediaVo.discId = item.discId;
+						mediaVo.genre = item.genre;
+						mediaVo.id = item.id;
+						mediaVo.imdbLink = item.imdbLink;
+						mediaVo.language = item.language;
+						mediaVo.releaseYear = item.releaseYear;
+						mediaVo.title = item.title; 
+						
+						mediasColl.push( mediaVo );
+					}
+					
+					var discVo:DiscVo = new DiscVo();
+					discVo.id = mediasColl[0].discId;
+					discVo.medias = mediasColl;
+					
+					// Dispatch the event to update the db
+					var updaeteDisc:DiscsIndexEvent =
+						 new DiscsIndexEvent(DiscsIndexEvent.UPDATE_DISC);
+					updaeteDisc.discVo = discVo;
+					
+					dispatchEvent( updaeteDisc );
+					
+					// Just show a completed message
+					updateComplete();
+				}
+			}
+			
+			public function updateComplete():void
+			{
+				Alert.show("Disc data updated", "Information", 
+					Alert.OK, this, alertHandler);
+			}
+			
+			private function alertHandler(event:Event):void
+			{
+				onCloseClick();
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" height="30" styleName="headerStripStyle"
+		verticalAlign="middle">
+		<mx:Canvas width="40%" height="100%">
+			<components:HeadingWithIcon label="Media Info" 
+				imageIcon="{SharedAssets.infoIcon}"/>
+		</mx:Canvas>
+		<mx:HBox width="60%" height="100%" horizontalAlign="right">
+			<mx:Button label="Update" click="onUpdateClick()"/>
+			<mx:Button label="Cancel" click="onCloseClick()"/>
+		</mx:HBox>
+	</mx:HBox>
+	
+	<mx:DataGrid id="dg" width="100%" height="100%"
+		editable="true" top="25"
+		dataProvider="{data}">
+		<mx:columns>
+			<mx:DataGridColumn headerText="Title" dataField="title"/>
+			<mx:DataGridColumn headerText="Cast" dataField="cast"/>
+			<mx:DataGridColumn headerText="Director" dataField="director" width="100"/>
+			<mx:DataGridColumn headerText="Genre" dataField="genre" width="80"/>
+			<mx:DataGridColumn headerText="Release Year" dataField="releaseYear" width="40"/>
+			<mx:DataGridColumn headerText="Language" dataField="language" width="75">
+				<mx:itemEditor>
+					<mx:Component>
+						<mx:ComboBox>
+							<mx:dataProvider>
+								<mx:Object label="English"/>
+								<mx:Object label="Hindi"/>
+								<mx:Object label="Other"/>
+							</mx:dataProvider>
+						</mx:ComboBox>
+					</mx:Component>
+				</mx:itemEditor>
+			</mx:DataGridColumn>
+		</mx:columns>
+	</mx:DataGrid>
+	
+</mx:TitleWindow>

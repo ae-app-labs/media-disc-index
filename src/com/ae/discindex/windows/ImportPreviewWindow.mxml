@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" 
+	layout="vertical" width="550" height="380"
+	styleName="viewStyle"
+	showCloseButton="true" title="Import Preview"
+	close="onCloseClick()" xmlns:components="com.ae.components.*">
+	
+	<mx:Script>
+		<![CDATA[
+			import com.ae.discindex.vo.DiscVo;
+			import com.ae.discindex.assets.SharedAssets;
+			import com.ae.discindex.events.DiscsIndexEvent;
+			import com.ae.discindex.business.DiscIndexManager;
+			import mx.managers.PopUpManager;
+			
+			private function onCloseClick():void
+			{
+				PopUpManager.removePopUp( this );
+			}
+			
+			private function setSelected(what:String):void
+			{
+				var selected:Boolean = true;
+				if(what == "none")
+				{
+					selected = false;
+				}
+				
+				for each(var item:Object in data)
+				{
+					item.field1 = selected; 
+				}
+			}
+			
+			private function onImportClick():void
+			{
+				var tempData:Array = new Array();
+				for each(var item:DiscVo in data)
+				{
+					if(item.field1 == true)
+						tempData.push( item );
+				}
+				var importEvent:DiscsIndexEvent = 
+					new DiscsIndexEvent( DiscsIndexEvent.ADD_DISCS);
+				importEvent.dataColl = tempData;
+				dispatchEvent( importEvent );
+			}
+			
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" height="30" styleName="headerStripStyle"
+		verticalAlign="middle">
+		<mx:Canvas width="40%" height="100%">
+			<components:HeadingWithIcon label="Import Preview" 
+				imageIcon="{SharedAssets.importIcon}"/>
+		</mx:Canvas>
+		<mx:HBox width="60%" height="100%" horizontalAlign="right">
+			<mx:Button toolTip="Select All" width="24" height="22"
+				icon="{SharedAssets.selectAllIcon}" 
+				click="setSelected('all')"/>
+			<mx:Button toolTip="Select None" width="24" height="22"
+				icon="{SharedAssets.selectNoneIcon}" 
+				click="setSelected('none')"/>
+			<mx:Button label="Import" click="onImportClick()"/>
+			<mx:Button label="Cancel" click="onCloseClick()"/>
+		</mx:HBox>
+	</mx:HBox>
+	
+	<mx:DataGrid id="theDataGrid" top="30" width="100%" height="100%" 
+		dataProvider="{data}" editable="true">
+		<mx:columns>
+			<mx:DataGridColumn headerText="Disc Name" dataField="name" editable="false"/>
+			<mx:DataGridColumn headerText="Date" dataField="date" editable="false"/>
+			<mx:DataGridColumn headerText="Add" dataField="field1" 
+				editable="true" minWidth="30" width="35"
+				itemRenderer="com.ae.discindex.renderers.IncludeCellRenderer"
+				editorDataField="selected">
+				<mx:itemEditor>
+					<mx:Component>
+						<mx:CheckBox
+							label="{selected}" paddingLeft="20"
+							verticalCenter="0" horizontalCenter="0"/>
+					</mx:Component>
+				</mx:itemEditor>
+			</mx:DataGridColumn>
+		</mx:columns>
+	</mx:DataGrid>
+	
+</mx:TitleWindow>
